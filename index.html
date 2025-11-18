@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Progress Reward Simulator</title>
+    <style>
+        body {
+            background: #111;
+            color: #0f0;
+            font-family: monospace;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .box {
+            width: 350px;
+            margin: auto;
+            padding: 20px;
+            background: #000;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #0f0;
+            background: #222;
+            color: #0f0;
+        }
+
+        button {
+            width: 95%;
+            padding: 10px;
+            background: #0f0;
+            color: #000;
+            font-weight: bold;
+            border: none;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<h1>Gifts</h1>
+
+<!-- LOGIN -->
+<div id="loginBox" class="box">
+    <h3>Login</h3>
+    <input id="loginEmail" type="text" placeholder="Email">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p onclick="showSignup()" style="cursor:pointer;color:yellow;">Create new account</p>
+</div>
+
+<!-- SIGNUP -->
+<div id="signupBox" class="box hidden">
+    <h3>Signup</h3>
+    <input id="signupName" type="text" placeholder="Name">
+    <input id="signupEmail" type="text" placeholder="Email">
+    <input id="signupPass" type="password" placeholder="Password">
+    <button onclick="signup()">Create Account</button>
+    <p onclick="showLogin()" style="cursor:pointer;color:yellow;">Already have account? Login</p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashBox" class="box hidden">
+    <h2>Welcome, <span id="userName"></span></h2>
+
+    <h3>Target Progress: <span id="progress">0</span>%</h3>
+    <p>Complete the long-term target (2–3 months)</p>
+    <button onclick="addProgress()">Complete Daily Task</button>
+
+    <hr style="margin:20px 0; border-color:#0f0;">
+
+    <h3>Balance: Rs <span id="balance">0.0</span></h3>
+    <h4>Withdraw Limit: Rs <span id="limit">500</span></h4>
+    <button onclick="withdraw()">Withdraw</button>
+</div>
+
+<script>
+    // Load data
+    let user = JSON.parse(localStorage.getItem("user")) || null;
+
+    function showSignup() {
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('signupBox').classList.remove('hidden');
+    }
+
+    function showLogin() {
+        document.getElementById('signupBox').classList.add('hidden');
+        document.getElementById('loginBox').classList.remove('hidden');
+    }
+
+    function signup() {
+        let name = signupName.value;
+        let email = signupEmail.value;
+        let pass = signupPass.value;
+
+        if (!name || !email || !pass) return alert("Complete all fields");
+
+        user = {
+            name,
+            email,
+            pass,
+            progress: 0,
+            balance: 0,
+            limit: 500
+        };
+
+        localStorage.setItem("user", JSON.stringify(user));
+        alert("Account created");
+        showDashboard();
+    }
+
+    function login() {
+        let email = loginEmail.value;
+        let pass = loginPass.value;
+
+        let stored = JSON.parse(localStorage.getItem("user"));
+
+        if (!stored) return alert("No account found");
+        if (stored.email !== email || stored.pass !== pass)
+            return alert("Wrong email or password");
+
+        user = stored;
+        showDashboard();
+    }
+
+    function showDashboard() {
+        loginBox.classList.add('hidden');
+        signupBox.classList.add('hidden');
+        dashBox.classList.remove('hidden');
+
+        userName.innerText = user.name;
+        progress.innerText = user.progress;
+        balance.innerText = user.balance.toFixed(1);
+        limit.innerText = user.limit;
+    }
+
+    // Add Progress (daily task)
+    function addProgress() {
+        if (user.progress >= 100) {
+            alert("Target already completed!");
+            return;
+        }
+
+        user.progress += 1;
+        localStorage.setItem("user", JSON.stringify(user));
+        progress.innerText = user.progress;
+
+        if (user.progress === 100) {
+            alert("Great! Your target is complete. Slow earnings started.");
+        }
+    }
+
+    // Slow earning increase every 10 seconds
+    setInterval(() => {
+        if (!user) return;
+
+        if (user.progress >= 100) {
+            user.balance += (Math.random() * 1.2).toFixed(1) * 1; 
+            localStorage.setItem("user", JSON.stringify(user));
+            balance.innerText = user.balance.toFixed(1);
+        }
+    }, 10000);
+
+    function withdraw() {
+        if (user.balance >= user.limit) {
+            alert("Withdraw Success! New limit applied.");
+
+            user.balance = 0;
+
+            if (user.limit < 2000) user.limit = 2000;
+            else if (user.limit < 5000) user.limit = 5000;
+            else user.limit += 5000;
+
+            localStorage.setItem("user", JSON.stringify(user));
+            balance.innerText = user.balance.toFixed(1);
+            limit.innerText = user.limit;
+        } else {
+            alert("Balance is low. Reach target limit first.");
+        }
+    }
+
+    // Auto-login if user exists
+    if (user) showDashboard();
+</script>
+
+</body>
+</html>
