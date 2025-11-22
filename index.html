@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>My AppStore + Admin</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppStore + Admin</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
   body{background:#f9f9f9;color:#333;display:flex;min-height:100vh;transition:0.3s;}
-  /* Sidebar */
   .sidebar{width:250px;background:#fff;position:fixed;top:0;left:0;height:100%;padding:20px;box-shadow:2px 0 12px rgba(0,0,0,0.1);transform:translateX(-300px);transition:0.3s;z-index:1000;}
   .sidebar.active{transform:translateX(0);}
   .sidebar h2{margin-bottom:15px;text-align:center;}
   .sidebar input, .sidebar button, .sidebar select{width:100%;margin:5px 0;padding:8px;border-radius:6px;border:1px solid #ccc;}
+  .sidebar input[type="file"]{display:block;margin-bottom:10px;z-index:1001;}
   .sidebar button{cursor:pointer;background:#333;color:#fff;border:none;transition:0.2s;}
   .sidebar button:hover{background:#555;}
   .sidebar a{display:block;padding:8px;margin:5px 0;border-radius:6px;text-decoration:none;color:#333;cursor:pointer;}
   .sidebar a:hover{background:#eee;}
 
-  /* Main content */
   .main{flex:1;margin-left:0;padding:20px;transition:0.3s;position:relative;}
   .main.shift{margin-left:250px;}
   header{font-size:28px;text-align:center;margin-bottom:20px;}
@@ -32,6 +31,8 @@
   .app-icon{width:100px;height:100px;margin:15px auto;border-radius:20px;transition:0.3s;}
   .app-name{font-size:18px;font-weight:600;margin:10px 0 5px 0;}
   .app-desc{font-size:14px;color:#666;padding:0 10px 15px 10px;}
+  .download-btn{display:inline-block;margin:10px;padding:5px 10px;background:#333;color:#fff;border-radius:6px;text-decoration:none;transition:0.2s;}
+  .download-btn:hover{background:#555;}
 
   footer{text-align:center;padding:15px;font-size:14px;color:#999;border-top:1px solid #ddd;margin-top:20px;transition:0.3s;}
 
@@ -41,141 +42,148 @@
   body.dark .sidebar a:hover{background:#333;}
   body.dark .app-card{background:#1e1e1e;box-shadow:0 4px 12px rgba(255,255,255,0.05);}
   body.dark .app-desc{color:#aaa;}
+  body.dark .download-btn{background:#eee;color:#333;}
+  body.dark .download-btn:hover{background:#999;}
   body.dark .theme-toggle{background:#eee;color:#333;}
   body.dark footer{color:#aaa;}
 </style>
-  </head>
-  <body>
+</head>
+<body>
 
-	<!-- Sidebar + Admin Panel -->
-	<div class="sidebar" id="sidebar">
-	  <h2>Admin Panel</h2>
-	  <div id="loginForm">
-		<input type="text" id="username" placeholder="Username">
-		<input type="password" id="password" placeholder="Password">
-		<button onclick="adminLogin()">Login</button>
-	  </div>
-	  <div id="adminControls" style="display:none;">
-		<h3>Add App</h3>
-		<input type="text" id="appName" placeholder="App Name">
-		<input type="text" id="appDesc" placeholder="Description">
-		<input type="text" id="appIcon" placeholder="Icon URL or Path">
-		<select id="appCategory">
-		  <option value="games">Games</option>
-		  <option value="tools">Tools</option>
-		  <option value="utilities">Utilities</option>
-		</select>
-		<button onclick="addApp()">Add App</button>
-		<h3>App List</h3>
-		<div id="appList"></div>
-		<button onclick="logoutAdmin()">Logout</button>
-	  </div>
-	</div>
+<div class="sidebar" id="sidebar">
+  <h2>Admin Panel</h2>
+  <div id="loginForm">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+  </div>
+  <div id="adminControls" style="display:none;">
+    <h3>Add App</h3>
+    <input type="text" id="appName" placeholder="App Name">
+    <input type="text" id="appDesc" placeholder="Description">
+    <input type="file" id="appFile">
+    <select id="appCategory">
+      <option value="games">Games</option>
+      <option value="tools">Tools</option>
+      <option value="utilities">Utilities</option>
+    </select>
+    <button onclick="addApp()">Add App</button>
+    <h3>App List</h3>
+    <div id="appList"></div>
+    <button onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
 
-	<!-- Main content -->
-	<div class="main" id="mainContent">
-	  <span class="menu-btn" id="menuBtn">&#x22EE;</span> <!-- 3 dots -->
-	  <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark/Light</button>
-	  <header>My AppStore</header>
-	  <input type="text" class="search-bar" id="searchBar" placeholder="Search apps...">
-	  <div class="app-grid" id="appGrid"></div>
-	  <footer>Developed By Ansar Missan</footer>
-	</div>
+<div class="main" id="mainContent">
+  <span class="menu-btn" id="menuBtn">&#x22EE;</span>
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark/Light</button>
+  <header>My AppStore</header>
+  <input type="text" class="search-bar" id="searchBar" placeholder="Search apps...">
+  <div class="app-grid" id="appGrid"></div>
+  <footer>Developed By Ansar Missan</footer>
+</div>
 
 <script>
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  const menuBtn = document.getElementById('menuBtn');
-  const loginForm = document.getElementById('loginForm');
-  const adminControls = document.getElementById('adminControls');
-  const appList = document.getElementById('appList');
-  const appGrid = document.getElementById('appGrid');
-  const searchBar = document.getElementById('searchBar');
+const sidebar=document.getElementById('sidebar');
+const mainContent=document.getElementById('mainContent');
+const menuBtn=document.getElementById('menuBtn');
+const loginForm=document.getElementById('loginForm');
+const adminControls=document.getElementById('adminControls');
+const appList=document.getElementById('appList');
+const appGrid=document.getElementById('appGrid');
+const searchBar=document.getElementById('searchBar');
 
-  let apps = [
-    {name:"App One", desc:"Short description", icon:"https://via.placeholder.com/100", category:"games"},
-    {name:"App Two", desc:"Short description", icon:"https://via.placeholder.com/100", category:"tools"}
-  ];
+let apps=[];
 
-  function displayApps(list = apps){
-    appGrid.innerHTML = '';
-    list.forEach((app,i)=>{
-      const card = document.createElement('div');
-      card.className = 'app-card';
-      card.innerHTML=`<img src="${app.icon}" class="app-icon" alt="${app.name}">
-                      <div class="app-name">${app.name}</div>
-                      <div class="app-desc">${app.desc}</div>`;
-      appGrid.appendChild(card);
-    });
-    displayAdminList();
-  }
-
-  function displayAdminList(){
-    appList.innerHTML='';
-    apps.forEach((app,i)=>{
-      const div = document.createElement('div');
-      div.innerHTML=`${app.name} (${app.category}) <button onclick="deleteApp(${i})">Delete</button>`;
-      appList.appendChild(div);
-    });
-  }
-
-  function addApp(){
-    const name = document.getElementById('appName').value.trim();
-    const desc = document.getElementById('appDesc').value.trim();
-    const icon = document.getElementById('appIcon').value.trim();
-    const category = document.getElementById('appCategory').value;
-    if(name && desc && icon){
-      apps.push({name,desc,icon,category});
-      displayApps();
-      document.getElementById('appName').value='';
-      document.getElementById('appDesc').value='';
-      document.getElementById('appIcon').value='';
-    } else {
-      alert('All fields required');
-    }
-  }
-
-  function deleteApp(index){
-    if(confirm('Are you sure to delete this app?')){
-      apps.splice(index,1);
-      displayApps();
-    }
-  }
-
-  function adminLogin(){
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if(username==='admin' && password==='1234'){
-      loginForm.style.display='none';
-      adminControls.style.display='block';
-      alert('✅ Admin logged in successfully');
-    } else {
-      alert('❌ Invalid credentials. Username: admin, Password: 1234');
-    }
-  }
-
-  function logoutAdmin(){
-    adminControls.style.display='none';
-    loginForm.style.display='block';
-  }
-
-  menuBtn.addEventListener('click',()=>{
-    sidebar.classList.toggle('active');
-    mainContent.classList.toggle('shift');
+function displayApps(list=apps){
+  appGrid.innerHTML='';
+  list.forEach((app,i)=>{
+    const card=document.createElement('div');
+    card.className='app-card';
+    card.innerHTML=`
+      <img src="${app.icon}" class="app-icon" alt="${app.name}">
+      <div class="app-name">${app.name}</div>
+      <div class="app-desc">${app.desc}</div>
+      ${app.fileData? `<a href="${app.fileData}" download="${app.fileName}" class="download-btn">Download</a>` : ''}
+    `;
+    appGrid.appendChild(card);
   });
+  displayAdminList();
+}
 
-  searchBar.addEventListener('input',()=>{
-    const query = searchBar.value.toLowerCase();
-    const filtered = apps.filter(app=>app.name.toLowerCase().includes(query)||app.desc.toLowerCase().includes(query));
-    displayApps(filtered);
+function displayAdminList(){
+  appList.innerHTML='';
+  apps.forEach((app,i)=>{
+    const div=document.createElement('div');
+    div.innerHTML=`${app.name} (${app.category}) <button onclick="deleteApp(${i})">Delete</button>`;
+    appList.appendChild(div);
   });
+}
 
-  function toggleTheme(){
-    document.body.classList.toggle('dark');
+function addApp(){
+  const name=document.getElementById('appName').value.trim();
+  const desc=document.getElementById('appDesc').value.trim();
+  const fileInput=document.getElementById('appFile');
+  const category=document.getElementById('appCategory').value;
+
+  if(!name || !desc || fileInput.files.length===0){
+    alert('All fields required');
+    return;
   }
 
+  const file=fileInput.files[0];
+  const blob=new Blob([file],{type:file.type}); // Blob for download
+  const url=URL.createObjectURL(blob);
+
+  const icon="https://via.placeholder.com/100";
+  apps.push({name,desc,icon,fileData:url,fileName:file.name,category});
   displayApps();
+  document.getElementById('appName').value='';
+  document.getElementById('appDesc').value='';
+  document.getElementById('appFile').value='';
+}
+
+function deleteApp(index){
+  if(confirm('Are you sure to delete this app?')){
+    apps.splice(index,1);
+    displayApps();
+  }
+}
+
+function adminLogin(){
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value.trim();
+  if(username==='admin' && password==='1234'){
+    loginForm.style.display='none';
+    adminControls.style.display='block';
+    alert('✅ Admin logged in successfully');
+  } else {
+    alert('❌ Invalid credentials. Username: admin, Password: 1234');
+  }
+}
+
+function logoutAdmin(){
+  adminControls.style.display='none';
+  loginForm.style.display='block';
+}
+
+menuBtn.addEventListener('click',()=>{
+  sidebar.classList.toggle('active');
+  mainContent.classList.toggle('shift');
+});
+
+searchBar.addEventListener('input',()=>{
+  const query=searchBar.value.toLowerCase();
+  const filtered=apps.filter(app=>app.name.toLowerCase().includes(query)||app.desc.toLowerCase().includes(query));
+  displayApps(filtered);
+});
+
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+}
+
+displayApps();
 </script>
 
-  </body>
+</body>
 </html>
